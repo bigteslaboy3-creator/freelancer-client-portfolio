@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Creative professional portfolio showcasing unique projects and expertise">
     <title>Creative Portfolio | Your Name</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -436,6 +435,29 @@
             background-color: var(--secondary);
         }
 
+        /* Quick Replies */
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .quick-reply {
+            background-color: rgba(110, 7, 243, 0.2);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quick-reply:hover {
+            background-color: var(--primary);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .nav-links {
@@ -644,17 +666,22 @@
         </div>
         <div class="chatbot-window">
             <div class="chat-header">
-                <h3>Chat with me</h3>
+                <h3>Portfolio Assistant</h3>
                 <span class="close-chat"><i class="fas fa-times"></i></span>
             </div>
             <div class="chat-messages">
                 <div class="message bot-message">
-                    Hello there! How can I help you today?
+                    Hello! I'm your portfolio assistant. How can I help you today?
+                    <div class="quick-replies">
+                        <button class="quick-reply" data-reply="Tell me about yourself">About</button>
+                        <button class="quick-reply" data-reply="Show me your projects">Projects</button>
+                        <button class="quick-reply" data-reply="How can I contact you?">Contact</button>
+                    </div>
                 </div>
             </div>
             <div class="chat-input">
-                <input type="text" placeholder="Type your message...">
-                <button><i class="fas fa-paper-plane"></i></button>
+                <input type="text" placeholder="Ask about my work..." id="chat-input">
+                <button id="send-message"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
@@ -741,19 +768,39 @@
         // Listen for scroll events
         window.addEventListener('scroll', checkScroll);
 
-        // Simple chatbot functionality
-        const chatInput = document.querySelector('.chat-input input');
+        // Enhanced chatbot functionality
+        const chatInput = document.getElementById('chat-input');
         const chatMessages = document.querySelector('.chat-messages');
-        const sendButton = document.querySelector('.chat-input button');
+        const sendButton = document.getElementById('send-message');
+        const quickReplies = document.querySelectorAll('.quick-reply');
         
+        // Predefined responses based on user queries
+        const botResponses = {
+            'hello': 'Hello! How can I help you explore this portfolio today?',
+            'hi': 'Hi there! What would you like to know about my work?',
+            'about': "I'm a creative designer and developer with over 5 years of experience. I specialize in creating unique digital experiences that balance aesthetics with functionality. You can learn more about me in the About section!",
+            'project': 'I have several projects showcasing my skills. Some highlights include brand identity design, e-commerce websites, and mobile app UI. Check out the Projects section to see my work!',
+            'contact': "You can reach me via the contact form on this website, or email me directly at hello@portfolio.com. I'm always open to discussing new opportunities!",
+            'default': "I'm not sure I understand. You can ask me about my skills, projects, or how to contact me. Try using the quick reply buttons for guidance!"
+        };
+
+        // Quick reply functionality
+        quickReplies.forEach(reply => {
+            reply.addEventListener('click', () => {
+                const replyText = reply.getAttribute('data-reply');
+                addMessage(replyText, 'user');
+                setTimeout(() => {
+                    botResponse(replyText);
+                }, 500);
+            });
+        });
+
         function sendMessage() {
             const message = chatInput.value.trim();
             if (message) {
-                // Add user message
                 addMessage(message, 'user');
                 chatInput.value = '';
                 
-                // Simulate bot response after a short delay
                 setTimeout(() => {
                     botResponse(message);
                 }, 500);
@@ -769,19 +816,50 @@
         }
         
         function botResponse(userMessage) {
+            // Convert to lowercase for easier matching
+            const message = userMessage.toLowerCase();
             let response = '';
             
-            if (userMessage.toLowerCase().includes('hello') || userMessage.toLowerCase().includes('hi')) {
-                response = 'Hello! How can I help you today?';
-            } else if (userMessage.toLowerCase().includes('project')) {
-                response = 'I\'d love to tell you about my projects! Which type are you interested in?';
-            } else if (userMessage.toLowerCase().includes('contact')) {
-                response = 'You can reach me at hello@portfolio.com or through the contact form on my website.';
+            // Check for keywords in the user's message
+            if (message.includes('hello') || message.includes('hi')) {
+                response = botResponses['hello'];
+            } else if (message.includes('about') || message.includes('who are you')) {
+                response = botResponses['about'];
+            } else if (message.includes('project') || message.includes('work')) {
+                response = botResponses['project'];
+            } else if (message.includes('contact') || message.includes('email') || message.includes('hire')) {
+                response = botResponses['contact'];
             } else {
-                response = 'That\'s interesting! Tell me more about what you\'re looking for.';
+                response = botResponses['default'];
             }
             
-            addMessage(response, 'bot');
+            // Add quick replies to the bot's response
+            const responseWithReplies = response + 
+                '<div class="quick-replies">' +
+                '<button class="quick-reply" data-reply="Tell me about yourself">About</button>' +
+                '<button class="quick-reply" data-reply="Show me your projects">Projects</button>' +
+                '<button class="quick-reply" data-reply="How can I contact you?">Contact</button>' +
+                '</div>';
+            
+            // Create and add the message
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', 'bot-message');
+            messageDiv.innerHTML = responseWithReplies;
+            chatMessages.appendChild(messageDiv);
+            
+            // Reattach event listeners to the new quick replies
+            const newQuickReplies = messageDiv.querySelectorAll('.quick-reply');
+            newQuickReplies.forEach(reply => {
+                reply.addEventListener('click', () => {
+                    const replyText = reply.getAttribute('data-reply');
+                    addMessage(replyText, 'user');
+                    setTimeout(() => {
+                        botResponse(replyText);
+                    }, 500);
+                });
+            });
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
         
         sendButton.addEventListener('click', sendMessage);
@@ -790,6 +868,22 @@
                 sendMessage();
             }
         });
+
+        // Auto-open chatbot after a delay
+        setTimeout(() => {
+            if (!chatWindow.classList.contains('active')) {
+                chatWindow.classList.add('active');
+                
+                // Add welcome message after a short delay
+                setTimeout(() => {
+                    const welcomeDiv = document.createElement('div');
+                    welcomeDiv.classList.add('message', 'bot-message');
+                    welcomeDiv.innerHTML = "Welcome to my portfolio! I'm here to help you navigate and learn more about my work. How can I assist you today?";
+                    chatMessages.appendChild(welcomeDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 300);
+            }
+        }, 5000);
     </script>
 </body>
 </html>
